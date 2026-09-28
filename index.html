@@ -7,8 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Supabase Official SDK -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
@@ -575,7 +573,7 @@
         <button id="themeToggleBtn" class="icon-btn" title="Toggle theme">
           <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
         </button>
-        <button id="newNoteBtn" class="btn btn-primary">+ New Note</button>
+        <button id="newNoteBtn" class="btn btn-primary" type="button">+ New Note</button>
       </div>
     </div>
   </header>
@@ -588,7 +586,7 @@
         <div class="stat-badge">Today: <strong id="statToday">0</strong></div>
       </div>
       <div class="db-status" id="dbStatus">
-        <span class="db-dot"></span> <span id="dbStatusText">Checking connection...</span>
+        <span class="db-dot"></span> <span id="dbStatusText">Ready</span>
       </div>
     </div>
 
@@ -600,7 +598,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="editorModalTitle" style="font-size: 1.1rem; font-weight: 600;">New Note</h3>
-        <button class="card-btn" id="closeEditorBtn" style="font-size: 1.1rem;">✕</button>
+        <button class="card-btn" id="closeEditorBtn" style="font-size: 1.1rem;" type="button">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -617,8 +615,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelEditorBtn">Cancel</button>
-        <button class="btn btn-primary" id="saveNoteBtn">Save Note</button>
+        <button class="btn btn-secondary" id="cancelEditorBtn" type="button">Cancel</button>
+        <button class="btn btn-primary" id="saveNoteBtn" type="button">Save Note</button>
       </div>
     </div>
   </div>
@@ -631,7 +629,7 @@
           <h3 id="detailTitle" style="font-size: 1.15rem; font-weight: 600;"></h3>
           <span id="detailDate" style="font-size: 0.75rem; color: var(--text-muted);"></span>
         </div>
-        <button class="card-btn" id="closeDetailBtn" style="font-size: 1.1rem;">✕</button>
+        <button class="card-btn" id="closeDetailBtn" style="font-size: 1.1rem;" type="button">✕</button>
       </div>
       <div class="modal-body">
         <p id="detailContent" style="white-space: pre-wrap; line-height: 1.6; color: var(--text-main); font-size: 0.95rem;"></p>
@@ -639,8 +637,8 @@
       <div class="modal-footer" style="justify-content: space-between;">
         <span id="detailUpdated" style="font-size: 0.75rem; color: var(--text-soft); align-self: center;"></span>
         <div style="display: flex; gap: 0.5rem;">
-          <button class="btn btn-secondary" id="detailEditBtn">Edit</button>
-          <button class="btn btn-danger" id="detailDeleteBtn">Delete</button>
+          <button class="btn btn-secondary" id="detailEditBtn" type="button">Edit</button>
+          <button class="btn btn-danger" id="detailDeleteBtn" type="button">Delete</button>
         </div>
       </div>
     </div>
@@ -651,7 +649,7 @@
     <div class="modal-card" style="max-width: 420px;">
       <div class="modal-header">
         <h3 style="font-size: 1.05rem; font-weight: 600; color: var(--danger);">Delete Note?</h3>
-        <button class="card-btn" id="closeDeleteBtn">✕</button>
+        <button class="card-btn" id="closeDeleteBtn" type="button">✕</button>
       </div>
       <div class="modal-body">
         <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
@@ -659,8 +657,8 @@
         </p>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
-        <button class="btn btn-danger" id="confirmDeleteBtn">Delete Permanently</button>
+        <button class="btn btn-secondary" id="cancelDeleteBtn" type="button">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn" type="button">Delete Permanently</button>
       </div>
     </div>
   </div>
@@ -668,15 +666,22 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
+    // Supabase Direct REST API (Zero external script dependencies)
     const SUPABASE_URL = "https://yktoyaqijckynlzdeiuq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrdG95YXFpamNreW5semRlaXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NzkzMTksImV4cCI6MjEwNjE1NTMxOX0.2VpawSiOCybMx0PFEwt2XPGM20WtabLUy4dFdJoq0Zs";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrdG95YXFpamNreW5semRlaXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NzkzMTksImV4cCI6MjEwNjE1NTMxOX0.2VpawSiOCybMx0PFEwt2XPGM20WtabLUy4dFdJoq0Zs";
+    const REST_ENDPOINT = `${SUPABASE_URL}/rest/v1/mmnotes`;
+
+    const HEADERS = {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal"
+    };
 
     const STORAGE_KEY = "mmnotes_data";
     let notes = [];
     let editingNoteId = null;
     let pendingDeleteId = null;
-    let supabase = null;
-    let isCloudReady = false;
 
     // Elements
     const noteGrid = document.getElementById("noteGrid");
@@ -712,146 +717,7 @@
       } catch (e) {}
     }
 
-    // Initialize Supabase Client
-    try {
-      if (window.supabase && typeof window.supabase.createClient === "function") {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        isCloudReady = true;
-      }
-    } catch (e) {
-      console.warn("Supabase initialization error:", e);
-    }
-
-    // Initial render from local cache so the UI shows up immediately
-    notes = readLocal();
-    renderNotes();
-
-    // Asynchronous Cloud Fetch with 3-second timeout protection
-    async function loadNotes() {
-      if (!isCloudReady) {
-        updateDbStatus(false, "Local Mode");
-        return;
-      }
-
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Connection timed out")), 3000)
-      );
-
-      try {
-        const fetchPromise = supabase
-          .from("mmnotes")
-          .select("*")
-          .order("updated_at", { ascending: false });
-
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
-
-        if (!error && Array.isArray(data)) {
-          notes = data.map(item => ({
-            id: item.id,
-            title: item.title,
-            content: item.content,
-            date: item.date,
-            createdAt: item.created_at,
-            updatedAt: item.updated_at
-          }));
-          writeLocal(notes);
-          updateDbStatus(true, "Cloud Synced");
-          renderNotes();
-        } else {
-          console.warn("Supabase response:", error);
-          updateDbStatus(false, "Local Mode (Check DB)");
-        }
-      } catch (err) {
-        console.warn("Cloud connection notice:", err.message);
-        updateDbStatus(false, "Local Mode (Offline)");
-      }
-    }
-
-    async function persistNoteToCloud(note) {
-      writeLocal(notes);
-      if (!isCloudReady) return;
-
-      try {
-        await supabase.from("mmnotes").upsert({
-          id: note.id,
-          title: note.title,
-          content: note.content,
-          date: note.date,
-          created_at: note.createdAt,
-          updated_at: note.updatedAt
-        });
-        updateDbStatus(true, "Cloud Synced");
-      } catch (err) {
-        console.error("Cloud persist error:", err);
-      }
-    }
-
-    async function removeNoteFromCloud(id) {
-      writeLocal(notes);
-      if (!isCloudReady) return;
-
-      try {
-        await supabase.from("mmnotes").delete().eq("id", id);
-      } catch (err) {
-        console.error("Cloud delete error:", err);
-      }
-    }
-
-    function renderNotes() {
-      const q = searchInput.value.trim().toLowerCase();
-      const d = dateFilter.value;
-
-      const filtered = notes.filter(n => {
-        const matchTitle = (n.title || "").toLowerCase().includes(q);
-        const matchContent = (n.content || "").toLowerCase().includes(q);
-        const matchDate = (n.date || "").includes(q);
-        const matchesQuery = !q || matchTitle || matchContent || matchDate;
-        const matchesDateFilter = !d || n.date === d;
-        return matchesQuery && matchesDateFilter;
-      });
-
-      updateStats();
-
-      if (filtered.length === 0) {
-        noteGrid.innerHTML = `
-          <div class="empty-state">
-            <h3>No notes found</h3>
-            <p>${notes.length === 0 ? "Your notebook is empty. Click \"+ New Note\" to create your first note!" : "Try adjusting your search terms or date filter."}</p>
-          </div>
-        `;
-        return;
-      }
-
-      noteGrid.innerHTML = filtered.map(note => `
-        <div class="note-card" onclick="openDetailModal('${note.id}')">
-          <div>
-            <div class="note-card-header">
-              <span class="note-card-title">${escapeHTML(note.title || "Untitled")}</span>
-              <span class="note-card-date">${note.date}</span>
-            </div>
-            <div class="note-card-preview">${escapeHTML(note.content || "")}</div>
-          </div>
-          <div class="note-card-footer">
-            <span>${timeAgo(new Date(note.updatedAt || Date.now()))}</span>
-            <div class="card-actions" onclick="event.stopPropagation();">
-              <button class="card-btn" onclick="openEditModal('${note.id}')">Edit</button>
-              <button class="card-btn delete" onclick="confirmDelete('${note.id}')">Delete</button>
-            </div>
-          </div>
-        </div>
-      `).join("");
-    }
-
-    function updateStats() {
-      const now = new Date();
-      const currentYearMonth = now.toISOString().slice(0, 7);
-      const todayDate = now.toISOString().slice(0, 10);
-
-      document.getElementById("statTotal").textContent = notes.length;
-      document.getElementById("statMonth").textContent = notes.filter(n => (n.date || "").startsWith(currentYearMonth)).length;
-      document.getElementById("statToday").textContent = notes.filter(n => n.date === todayDate).length;
-    }
-
+    // Modal Operations
     function openNewModal() {
       editingNoteId = null;
       document.getElementById("editorModalTitle").textContent = "New Note";
@@ -860,6 +726,10 @@
       noteDateInput.value = new Date().toISOString().slice(0, 10);
       editorModal.classList.add("active");
       noteTitleInput.focus();
+    }
+
+    function closeEditor() {
+      editorModal.classList.remove("active");
     }
 
     window.openEditModal = function(id) {
@@ -893,13 +763,134 @@
       deleteModal.classList.add("active");
     };
 
+    // REST Sync Functions
+    async function loadCloudNotes() {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        const res = await fetch(`${REST_ENDPOINT}?select=*&order=updated_at.desc`, {
+          headers: HEADERS,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            notes = data.map(item => ({
+              id: item.id,
+              title: item.title,
+              content: item.content,
+              date: item.date,
+              createdAt: item.created_at,
+              updatedAt: item.updated_at
+            }));
+            writeLocal(notes);
+            updateDbStatus(true, "Cloud Synced");
+            renderNotes();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Using offline storage:", e.message);
+      }
+      updateDbStatus(false, "Local Mode");
+    }
+
+    async function syncUpsert(note) {
+      try {
+        await fetch(`${REST_ENDPOINT}?on_conflict=id`, {
+          method: "POST",
+          headers: { ...HEADERS, "Prefer": "resolution=merge-duplicates" },
+          body: JSON.stringify({
+            id: note.id,
+            title: note.title,
+            content: note.content,
+            date: note.date,
+            created_at: note.createdAt,
+            updated_at: note.updatedAt
+          })
+        });
+        updateDbStatus(true, "Cloud Synced");
+      } catch (err) {
+        console.warn("Could not sync to cloud:", err);
+      }
+    }
+
+    async function syncDelete(id) {
+      try {
+        await fetch(`${REST_ENDPOINT}?id=eq.${id}`, {
+          method: "DELETE",
+          headers: HEADERS
+        });
+      } catch (err) {
+        console.warn("Could not delete from cloud:", err);
+      }
+    }
+
+    function renderNotes() {
+      const q = searchInput.value.trim().toLowerCase();
+      const d = dateFilter.value;
+
+      const filtered = notes.filter(n => {
+        const matchTitle = (n.title || "").toLowerCase().includes(q);
+        const matchContent = (n.content || "").toLowerCase().includes(q);
+        const matchDate = (n.date || "").includes(q);
+        const matchesQuery = !q || matchTitle || matchContent || matchDate;
+        const matchesDateFilter = !d || n.date === d;
+        return matchesQuery && matchesDateFilter;
+      });
+
+      updateStats();
+
+      if (filtered.length === 0) {
+        noteGrid.innerHTML = `
+          <div class="empty-state">
+            <h3>No notes found</h3>
+            <p>${notes.length === 0 ? 'Your notebook is empty. Click "+ New Note" to write your first note!' : 'Try adjusting your search terms or date filter.'}</p>
+          </div>
+        `;
+        return;
+      }
+
+      noteGrid.innerHTML = filtered.map(note => `
+        <div class="note-card" onclick="openDetailModal('${note.id}')">
+          <div>
+            <div class="note-card-header">
+              <span class="note-card-title">${escapeHTML(note.title || "Untitled")}</span>
+              <span class="note-card-date">${note.date}</span>
+            </div>
+            <div class="note-card-preview">${escapeHTML(note.content || "")}</div>
+          </div>
+          <div class="note-card-footer">
+            <span>${timeAgo(new Date(note.updatedAt || Date.now()))}</span>
+            <div class="card-actions" onclick="event.stopPropagation();">
+              <button class="card-btn" onclick="openEditModal('${note.id}')" type="button">Edit</button>
+              <button class="card-btn delete" onclick="confirmDelete('${note.id}')" type="button">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function updateStats() {
+      const now = new Date();
+      const currentYearMonth = now.toISOString().slice(0, 7);
+      const todayDate = now.toISOString().slice(0, 10);
+
+      document.getElementById("statTotal").textContent = notes.length;
+      document.getElementById("statMonth").textContent = notes.filter(n => (n.date || "").startsWith(currentYearMonth)).length;
+      document.getElementById("statToday").textContent = notes.filter(n => n.date === todayDate).length;
+    }
+
     async function saveNote() {
       const title = noteTitleInput.value.trim();
       const content = noteContentInput.value.trim();
       const date = noteDateInput.value || new Date().toISOString().slice(0, 10);
 
       if (!title && !content) {
-        showToast("Please enter a title or content");
+        showToast("Please enter a title or note content");
         return;
       }
 
@@ -909,10 +900,11 @@
         const idx = notes.findIndex(n => n.id === editingNoteId);
         if (idx > -1) {
           notes[idx] = { ...notes[idx], title, content, date, updatedAt: timestamp };
-          editorModal.classList.remove("active");
+          writeLocal(notes);
+          closeEditor();
           renderNotes();
           showToast("Note updated");
-          await persistNoteToCloud(notes[idx]);
+          syncUpsert(notes[idx]);
         }
       } else {
         const newNote = {
@@ -924,10 +916,11 @@
           updatedAt: timestamp
         };
         notes.unshift(newNote);
-        editorModal.classList.remove("active");
+        writeLocal(notes);
+        closeEditor();
         renderNotes();
         showToast("Note saved");
-        await persistNoteToCloud(newNote);
+        syncUpsert(newNote);
       }
     }
 
@@ -935,11 +928,12 @@
       if (!pendingDeleteId) return;
       const id = pendingDeleteId;
       notes = notes.filter(n => n.id !== id);
+      writeLocal(notes);
       pendingDeleteId = null;
       deleteModal.classList.remove("active");
       renderNotes();
       showToast("Note deleted");
-      await removeNoteFromCloud(id);
+      syncDelete(id);
     }
 
     function showToast(msg) {
@@ -964,11 +958,11 @@
       }[tag] || tag));
     }
 
-    // Event Listeners
+    // Attach Event Listeners
     document.getElementById("newNoteBtn").addEventListener("click", openNewModal);
     document.getElementById("saveNoteBtn").addEventListener("click", saveNote);
-    document.getElementById("closeEditorBtn").addEventListener("click", () => editorModal.classList.remove("active"));
-    document.getElementById("cancelEditorBtn").addEventListener("click", () => editorModal.classList.remove("active"));
+    document.getElementById("closeEditorBtn").addEventListener("click", closeEditor);
+    document.getElementById("cancelEditorBtn").addEventListener("click", closeEditor);
     document.getElementById("closeDetailBtn").addEventListener("click", () => detailModal.classList.remove("active"));
     document.getElementById("closeDeleteBtn").addEventListener("click", () => deleteModal.classList.remove("active"));
     document.getElementById("cancelDeleteBtn").addEventListener("click", () => deleteModal.classList.remove("active"));
@@ -1004,8 +998,10 @@
       document.body.classList.add("dark");
     }
 
-    // Run connection test
-    loadNotes();
+    // Immediate local setup followed by cloud sync
+    notes = readLocal();
+    renderNotes();
+    loadCloudNotes();
   </script>
 </body>
 </html>
