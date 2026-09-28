@@ -7,14 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Supabase Official SDK via unpkg CDN with fallback -->
+  <!-- Supabase Official SDK -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
       --bg-page: #f8fafc;
       --bg-surface: #ffffff;
-      --bg-elevated: #ffffff;
       --border-subtle: #e2e8f0;
       --border-hover: #cbd5e1;
       --text-main: #0f172a;
@@ -36,7 +35,6 @@
     body.dark {
       --bg-page: #090d16;
       --bg-surface: #111827;
-      --bg-elevated: #1e293b;
       --border-subtle: #1f2937;
       --border-hover: #374151;
       --text-main: #f8fafc;
@@ -319,7 +317,6 @@
       box-shadow: var(--shadow-sm);
       cursor: pointer;
       transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-      position: relative;
     }
 
     .note-card:hover {
@@ -674,24 +671,14 @@
     const SUPABASE_URL = "https://yktoyaqijckynlzdeiuq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrdG95YXFpamNreW5semRlaXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NzkzMTksImV4cCI6MjEwNjE1NTMxOX0.2VpawSiOCybMx0PFEwt2XPGM20WtabLUy4dFdJoq0Zs";
 
-    let supabase = null;
-    let isCloudReady = false;
-
-    // Initialize Supabase with global safety
-    try {
-      if (window.supabase && typeof window.supabase.createClient === "function") {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        isCloudReady = true;
-      }
-    } catch (err) {
-      console.warn("Could not initialize Supabase SDK:", err);
-    }
-
     const STORAGE_KEY = "mmnotes_data";
     let notes = [];
     let editingNoteId = null;
     let pendingDeleteId = null;
+    let supabase = null;
+    let isCloudReady = false;
 
+    // Elements
     const noteGrid = document.getElementById("noteGrid");
     const searchInput = document.getElementById("searchInput");
     const dateFilter = document.getElementById("dateFilter");
@@ -705,7 +692,12 @@
     const dbStatus = document.getElementById("dbStatus");
     const dbStatusText = document.getElementById("dbStatusText");
 
-    function readLocalNotes() {
+    function updateDbStatus(online, text) {
+      dbStatus.className = `db-status ${online ? "" : "offline"}`;
+      dbStatusText.textContent = text;
+    }
+
+    function readLocal() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : [];
@@ -714,95 +706,94 @@
       }
     }
 
-    function writeLocalNotes(data) {
+    function writeLocal(data) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (e) {
-        console.error("Local storage error:", e);
+      } catch (e) {}
+    }
+
+    // Initialize Supabase Client
+    try {
+      if (window.supabase && typeof window.supabase.createClient === "function") {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        isCloudReady = true;
       }
+    } catch (e) {
+      console.warn("Supabase initialization error:", e);
     }
 
-    function updateDbStatus(online, text) {
-      dbStatus.className = `db-status ${online ? "" : "offline"}`;
-      dbStatusText.textContent = text;
-    }
+    // Initial render from local cache so the UI shows up immediately
+    notes = readLocal();
+    renderNotes();
 
+    // Asynchronous Cloud Fetch with 3-second timeout protection
     async function loadNotes() {
-      // 1. Immediately render cached data so UI never hangs
-      notes = readLocalNotes();
-      renderNotes();
-
-      // 2. Fetch fresh records from Supabase
-      if (isCloudReady) {
-        try {
-          const { data, error } = await supabase
-            .from("mmnotes")
-            .select("*")
-            .order("updated_at", { ascending: false });
-
-          if (!error && Array.isArray(data)) {
-            notes = data.map(item => ({
-              id: item.id,
-              title: item.title,
-              content: item.content,
-              date: item.date,
-              createdAt: item.created_at,
-              updatedAt: item.updated_at
-            }));
-            writeLocalNotes(notes);
-            updateDbStatus(true, "Cloud Synced");
-            renderNotes();
-            return;
-          } else if (error) {
-            console.warn("Supabase load error:", error.message || error);
-            updateDbStatus(false, "Local Mode (DB Error)");
-          }
-        } catch (e) {
-          console.warn("Connection error to Supabase:", e);
-          updateDbStatus(false, "Local Mode (Offline)");
-        }
-      } else {
+      if (!isCloudReady) {
         updateDbStatus(false, "Local Mode");
+        return;
+      }
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Connection timed out")), 3000)
+      );
+
+      try {
+        const fetchPromise = supabase
+          .from("mmnotes")
+          .select("*")
+          .order("updated_at", { ascending: false });
+
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
+        if (!error && Array.isArray(data)) {
+          notes = data.map(item => ({
+            id: item.id,
+            title: item.title,
+            content: item.content,
+            date: item.date,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at
+          }));
+          writeLocal(notes);
+          updateDbStatus(true, "Cloud Synced");
+          renderNotes();
+        } else {
+          console.warn("Supabase response:", error);
+          updateDbStatus(false, "Local Mode (Check DB)");
+        }
+      } catch (err) {
+        console.warn("Cloud connection notice:", err.message);
+        updateDbStatus(false, "Local Mode (Offline)");
       }
     }
 
     async function persistNoteToCloud(note) {
-      writeLocalNotes(notes);
+      writeLocal(notes);
       if (!isCloudReady) return;
 
       try {
-        const { error } = await supabase
-          .from("mmnotes")
-          .upsert({
-            id: note.id,
-            title: note.title,
-            content: note.content,
-            date: note.date,
-            created_at: note.createdAt,
-            updated_at: note.updatedAt
-          });
-
-        if (error) throw error;
+        await supabase.from("mmnotes").upsert({
+          id: note.id,
+          title: note.title,
+          content: note.content,
+          date: note.date,
+          created_at: note.createdAt,
+          updated_at: note.updatedAt
+        });
         updateDbStatus(true, "Cloud Synced");
       } catch (err) {
-        console.error("Save error:", err);
-        updateDbStatus(false, "Saved Locally (Sync Failed)");
+        console.error("Cloud persist error:", err);
       }
     }
 
     async function removeNoteFromCloud(id) {
-      writeLocalNotes(notes);
+      writeLocal(notes);
       if (!isCloudReady) return;
 
       try {
-        const { error } = await supabase
-          .from("mmnotes")
-          .delete()
-          .eq("id", id);
-
-        if (error) throw error;
+        await supabase.from("mmnotes").delete().eq("id", id);
       } catch (err) {
-        console.error("Delete error:", err);
+        console.error("Cloud delete error:", err);
       }
     }
 
@@ -825,7 +816,7 @@
         noteGrid.innerHTML = `
           <div class="empty-state">
             <h3>No notes found</h3>
-            <p>${notes.length === 0 ? "You have no saved notes yet. Click \"+ New Note\" to create your first note!" : "Try adjusting your search terms or date filter."}</p>
+            <p>${notes.length === 0 ? "Your notebook is empty. Click \"+ New Note\" to create your first note!" : "Try adjusting your search terms or date filter."}</p>
           </div>
         `;
         return;
@@ -973,7 +964,7 @@
       }[tag] || tag));
     }
 
-    // Event Bindings
+    // Event Listeners
     document.getElementById("newNoteBtn").addEventListener("click", openNewModal);
     document.getElementById("saveNoteBtn").addEventListener("click", saveNote);
     document.getElementById("closeEditorBtn").addEventListener("click", () => editorModal.classList.remove("active"));
@@ -1013,7 +1004,7 @@
       document.body.classList.add("dark");
     }
 
-    // Startup
+    // Run connection test
     loadNotes();
   </script>
 </body>
